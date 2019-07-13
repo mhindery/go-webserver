@@ -73,7 +73,7 @@ Mathieus-MacBook-Pro:api mhindery$
 From the root of the repo:
 
 ```bash
-docker build -f Dockerfle -t <desired_tag> .
+docker build -f Dockerfile -t <desired_tag> .
 ```
 
 Run it:
