@@ -1,0 +1,9 @@
+# Ignore all by default
+*
+
+# Dependency files
+!go.mod
+!go.sum
+
+# Directories containing code
+!cmd/

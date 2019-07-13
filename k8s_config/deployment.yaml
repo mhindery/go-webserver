@@ -1,0 +1,111 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dummy-service-production
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dummy-service
+      env: production
+      version: "1"
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: dummy-service
+        env: production
+        version: "1"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values: 
+                  - dummy-service
+                - key: env
+                  operator: In
+                  values: 
+                  - production
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: dummy-service
+          imagePullPolicy: Always
+          image: <fill_in!>
+          ports:
+          - containerPort: 8282
+          - containerPort: 9000
+          env:
+          - name: GCP_PROJECT
+            value: 'gcp-project-name'
+          - name: DEVELOPMENT
+            value: '0'
+          - name: ENVIRONMENT
+            value: production
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_UID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.uid
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: POD_SERVICE_ACCOUNT
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.serviceAccountName
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 200Mi
+          livenessProbe:
+            httpGet:
+              path: /_ah/health/
+              port: 9000
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /_ah/ready/
+              port: 8282
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: podinfo
+              mountPath: /etc/podinfo
+              readOnly: false
+      volumes:
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: "labels"
+                fieldRef:
+                  fieldPath: metadata.labels
+              - path: "annotations"
+                fieldRef:
+                  fieldPath: metadata.annotations
